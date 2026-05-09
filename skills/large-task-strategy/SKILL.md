@@ -54,13 +54,37 @@ description: >
 
 ## When to Activate
 
+### 从简原则（Simplicity First）
+
+> 找最简单的方案，只在必要时增加复杂度。多 agent = 额外 token + 延迟 + 复杂度，只有收益明确超过成本时才用。
+
+**先过这个判断树：**
+
+```
+任务到达
+  ├─ 单次 LLM 调用能解决？ → 直接做
+  ├─ 串行 2-3 步、每步 <500 行、总耗时 <2min？ → prompt chaining，不需要 sub-agent
+  ├─ 单 agent + 工具循环能搞定？（任务明确、无多视角、步骤可预测） → 单 agent
+  └─ 以上都不适用 → 启动 large-task-strategy
+```
+
+### 启动条件（满足任一）
+
 - Reading/analyzing > 2 files or > 500 lines of code
-- Task estimated > 10 minutes
-- Need to spawn sub-agents
 - **Any single step estimated > 30 seconds**
 - **Any task with ≥2 independent steps** that can be parallelized
+- Task estimated > 10 minutes
+- 需要多角色审查（安全 + 性能 + 可读性等）
 - Debug/investigation with multiple data sources
-- **When in doubt, activate** - better to over-persist than lose work
+
+### 不应启动
+
+| 场景 | 正确做法 |
+|------|----------|
+| 简单问答 / 翻译 / 格式转换 | 单次调用 |
+| 已知路径的串行操作（lint → fix → test） | prompt chaining |
+| 单文件 <300 行的代码审查 | 单 agent 直接做 |
+| 用户只要快速答案 | 别 over-engineer |
 
 ## Core Principles
 
